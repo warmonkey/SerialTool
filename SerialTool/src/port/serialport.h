@@ -48,6 +48,7 @@ private:
     QSerialPort *serialPort;
     QTimer *m_scanTimer;
     QString autoOpenPortName;
+    bool autoDTR;
 };
 
 class SerialPortFactory : public AbstractPortFactory

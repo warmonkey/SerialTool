@@ -20,7 +20,7 @@ SerialPort::SerialPort(QWidget *parent) :
 
     QRegExpValidator *pReg = new QRegExpValidator(QRegExp("^\\d{2,7}$"));
     ui->baudRateBox->lineEdit()->setValidator(pReg);
-    serialPort->setTextModeEnabled(true);
+    //serialPort->setTextModeEnabled(true);
 #if defined(Q_OS_LINUX)
     ui->portNameBox->setEditable(true);
 #endif
@@ -29,6 +29,11 @@ SerialPort::SerialPort(QWidget *parent) :
     connect(m_scanTimer, &QTimer::timeout, this, &SerialPort::onTimerUpdate);
     connect(ui->baudRateBox, &QComboBox::currentTextChanged, this, &SerialPort::setBaudRate);
     connect(ui->portNameBox, SIGNAL(currentIndexChanged(int)), this, SIGNAL(portChanged()));
+    connect(ui->dtrBox, &QPushButton::toggled, [&](bool checked) {
+        if(serialPort->isOpen()) {
+            serialPort->setDataTerminalReady(checked);
+        }
+    });
 #if defined(Q_OS_LINUX)
     connect(ui->portNameBox->lineEdit(), SIGNAL(editingFinished()), this, SLOT(onPortTextEdited()));
 #endif
@@ -36,6 +41,7 @@ SerialPort::SerialPort(QWidget *parent) :
     scanPort();
     m_scanTimer->start(1000);
     autoOpenPortName="";
+    autoDTR = true;
 }
 
 SerialPort::~SerialPort()
@@ -53,7 +59,9 @@ void SerialPort::loadConfig(QSettings *config)
     config->beginGroup("SerialPort");
     int baudRate = config->value("BaudRate").toInt();
     QString str = QString::number(baudRate);
+    autoDTR = config->value("AutoDTR", true).toBool();
     config->endGroup();
+
     serialPort->setBaudRate(baudRate);
     ui->baudRateBox->setCurrentIndex(ui->baudRateBox->findText(str));
     ui->baudRateBox->setCurrentText(str);
@@ -63,6 +71,7 @@ void SerialPort::saveConfig(QSettings *config)
 {
     config->beginGroup("SerialPort");
     config->setValue("BaudRate", QVariant(ui->baudRateBox->currentText()));
+    config->setValue("AutoDTR", autoDTR);
     config->endGroup();
 }
 
@@ -88,8 +97,11 @@ bool SerialPort::open()
     if (serialPort->open(QIODevice::ReadWrite)) {
         ui->portNameBox->setEnabled(false); // 禁止更改串口
         autoOpenPortName = ui->portNameBox->currentText();
+
+        if(autoDTR) ui->dtrBox->setChecked(true);
         return true;
     }
+
     QMessageBox err(QMessageBox::Critical,
         tr("Error"),
         tr("Can not open the port!\n"
@@ -109,6 +121,7 @@ void SerialPort::reset()
 void SerialPort::close()
 {
     serialPort->close();
+    ui->dtrBox->setChecked(false);
     ui->portNameBox->setEnabled(true); // 允许更改串口
 //    autoOpenPortName = "";
 }
@@ -169,7 +182,10 @@ bool SerialPort::isOpen()
 void SerialPort::portSetDialog()
 {
     PortSetBox portSet(serialPort, this);
+
+    portSet.setAutoDTR(autoDTR);
     portSet.exec();
+    autoDTR = portSet.autoDTR();
 }
 
 // 扫描端口

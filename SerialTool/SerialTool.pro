@@ -6,10 +6,35 @@
 QT       += core gui widgets serialport network charts script uitools
 
 TARGET = SerialTool
-
 TEMPLATE = app
 
-CONFIG  += qscintilla2
+CONFIG += qscintilla2
+
+qscintilla2 {
+    QT += widgets
+    !ios:QT += printsupport
+    macx:lessThan(QT_MAJOR_VERSION, 6) {
+        QT += macextras
+    }
+
+    DEFINES += QSCINTILLA_DLL
+    INCLUDEPATH += $$PWD/../QScintilla_release/include
+    LIBS += -L$$PWD/../QScintilla_release/lib
+
+    CONFIG(debug, debug|release) {
+        mac: {
+            LIBS += -lqscintilla2_qt$${QT_MAJOR_VERSION}_debug
+        } else {
+            win32: {
+                LIBS += -lqscintilla2_qt$${QT_MAJOR_VERSION}d
+            } else {
+                LIBS += -lqscintilla2_qt$${QT_MAJOR_VERSION}
+            }
+        }
+    } else {
+        LIBS += -lqscintilla2_qt$${QT_MAJOR_VERSION}
+    }
+}
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -139,3 +164,18 @@ FORMS += \
     ui/updatedialog.ui \
     ui/oscilloscopeview.ui \
     ui/texttrview.ui
+
+copy_config.target = .copy_config
+copy_lang.target = .copy_lang
+copy_themes.target = .copy_themes
+copy_resources.target = .copy_resources
+
+win32 {
+    copy_config.commands    += robocopy $$shell_path($$PWD/config  ) $$shell_path($$OUT_PWD/config  ) /E
+    copy_lang.commands      += robocopy $$shell_path($$PWD/language) $$shell_path($$OUT_PWD/language) /E /XF *.ts
+    copy_themes.commands    += robocopy $$shell_path($$PWD/themes  ) $$shell_path($$OUT_PWD/themes  ) /E
+    copy_resources.commands += robocopy $$shell_path($$PWD/resource/re) $$shell_path($$OUT_PWD/resource) /E
+}
+
+QMAKE_EXTRA_TARGETS += copy_config copy_lang copy_themes copy_resources
+POST_TARGETDEPS  += .copy_config .copy_lang .copy_themes

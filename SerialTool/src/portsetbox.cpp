@@ -66,6 +66,16 @@ PortSetBox::~PortSetBox()
     delete ui;
 }
 
+bool PortSetBox::autoDTR()
+{
+    return ui->autoDTRBox->isChecked();
+}
+
+void PortSetBox::setAutoDTR(bool on)
+{
+    ui->autoDTRBox->setChecked(on);
+}
+
 void PortSetBox::setDataBits(int index)
 {
     serialPort->setDataBits(DataBits[index]);

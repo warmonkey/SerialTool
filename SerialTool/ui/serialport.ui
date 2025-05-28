@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>308</width>
+    <width>330</width>
     <height>29</height>
    </rect>
   </property>
@@ -172,6 +172,27 @@
        <string notr="true">460800</string>
       </property>
      </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="dtrBox">
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+  padding: 1.5px 3px;
+  min-width: 1em;
+}
+
+QPushButton:checked {
+  background: rgb(255, 170, 0)
+}
+</string>
+     </property>
+     <property name="text">
+      <string>DTR</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
   </layout>
